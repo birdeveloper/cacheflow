@@ -1,4 +1,3 @@
-/*
 package com.cacheflow.sdk
 
 import com.cacheflow.sdk.cache.CacheDao
@@ -54,4 +53,3 @@ class CacheManagerTest {
         verify(cacheDao).clearAllCache()
     }
 }
- */

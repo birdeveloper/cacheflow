@@ -1,9 +1,7 @@
-/*
-package com.cacheflow.sdk.config
+package com.cacheflow.sdk
 
-import com.cacheflow.sdk.CacheFlowException
-import com.cacheflow.sdk.ErrorListener
 import com.cacheflow.sdk.cache.CacheEntity
+import com.cacheflow.sdk.config.CacheFlowConfig
 import org.junit.Assert.*
 import org.junit.Test
 import kotlin.reflect.KClass
@@ -51,4 +49,3 @@ class CacheFlowConfigTest {
         assertEquals("ErrorType should match custom value", customErrorType, config.errorType)
     }
 }
- */
