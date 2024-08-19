@@ -1,7 +1,7 @@
 
-# CacheFlow SDK - Comprehensive Documentation
+# CacheFlow SDK - Detailed Documentation
 
-CacheFlow SDK is a robust solution for caching network responses in Android applications. This guide provides a detailed explanation of the SDK's features, setup, usage, testing, and more.
+CacheFlow SDK provides a robust solution for caching network responses in Android applications. This detailed guide covers configuration, supported request types, data storage, file download, and usage with code examples.
 
 ## Features
 
@@ -23,83 +23,157 @@ dependencies {
 
 ### Setting Up CacheFlow
 
-#### 1. Configure CacheFlow
+#### 1. Configure CacheFlow:
 
-Initialize CacheFlow by creating an instance of the `CacheFlow` class and providing necessary configuration options.
+To configure CacheFlow, you need to initialize it with `CacheFlowConfig`. Here’s an example of how to do this:
 
 ```kotlin
-val cacheFlow = CacheFlow.Builder(context)
-    .setCacheDirectory(File(context.cacheDir, "cache"))
-    .setCacheSize(10 * 1024 * 1024) // 10 MB
-    .build()
+import com.cacheflow.sdk.CacheFlowConfig
+import com.cacheflow.sdk.cache.CacheDatabase
+import com.cacheflow.sdk.network.NetworkClient
+
+// Create CacheFlowConfig instance
+val cacheFlowConfig = CacheFlowConfig(
+    cacheDuration = 60 * 60 * 1000, // 1 hour
+    isOfflineModeEnabled = true,
+    responseType = MyResponse::class, // Specify the response model class
+    errorType = MyError::class // Specify the error model class
+)
+
+// Initialize CacheFlow
+CacheFlow.initialize(context, cacheFlowConfig)
 ```
 
-#### 2. Set Up Network Client
+#### 2. Configure Network Client:
 
-Integrate CacheFlow with your network client to cache network responses. Example using Retrofit:
+Set up the network client for handling network requests:
 
 ```kotlin
-val retrofit = Retrofit.Builder()
-    .baseUrl("https://api.example.com/")
-    .client(CacheFlow.getOkHttpClient())
-    .addConverterFactory(GsonConverterFactory.create())
+import com.cacheflow.sdk.network.NetworkClient
+import okhttp3.OkHttpClient
+
+// Create OkHttpClient instance
+val okHttpClient = OkHttpClient.Builder()
     .build()
+
+// Initialize NetworkClient
+val networkClient = NetworkClient.getInstance(
+    baseUrl = "https://api.example.com",
+    okHttpClient = okHttpClient
+)
 ```
 
 ## Making Requests with CacheFlow
 
-Once CacheFlow is set up, you can make network requests and utilize caching seamlessly.
+### 1. Making Network Requests:
 
-#### 1. Making a Request
-
-Example of making a network request using Retrofit and caching responses:
+Use the `NetworkClient` to create and make network requests. Here’s how you can use it:
 
 ```kotlin
 interface ApiService {
     @GET("data")
-    suspend fun getData(): Response<Data>
+    suspend fun getData(): Response<MyResponse>
 }
-```
 
-#### 2. Handling Responses
+// Create ApiService instance
+val apiService = networkClient.createService(ApiService::class.java)
 
-Retrieve data from the cache or make a network request if not available in the cache.
-
-```kotlin
+// Make network request
 val response = apiService.getData()
 if (response.isSuccessful) {
     val data = response.body()
-    // Process the data
+    // Handle the data
+} else {
+    // Handle the error
 }
 ```
 
-## Advanced Usage
+### 2. Handling Responses with CacheFlow:
 
-### Handling Different Request Types
+To handle cached responses, use the `CacheFlow` API. The recommended way to retrieve data is using Kotlin’s Flow API:
 
-CacheFlow supports various types of requests such as GET and POST. Configure and handle these requests based on your needs.
+#### Example: Fetching Data with Flow
 
 ```kotlin
-@POST("submit")
-suspend fun submitData(@Body data: RequestData): Response<SubmitResponse>
+import com.cacheflow.sdk.CacheFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+
+val url = "https://api.example.com/data"
+
+// Example using Flow to collect data
+launch {
+    CacheFlow.performRequest(url, apiService::getData).collect { result ->
+        when (result) {
+            is Result.Loading -> {
+                // Handle the loading state
+            }
+            is Result.Success -> {
+                val data = result.data
+                // Handle the successful response data
+            }
+            is Result.Failure -> {
+                val message = result.message
+                // Handle the error message
+            }
+        }
+    }
+}
 ```
 
-### Downloading Files
-
-To handle file downloads, use the `CacheFlow` download manager.
+#### Example: Using Flow for File Downloads
 
 ```kotlin
-val downloadRequest = DownloadRequest.Builder("https://example.com/file.zip")
-    .setDestination(File(context.getExternalFilesDir(null), "file.zip"))
-    .build()
-CacheFlow.getDownloadManager().enqueue(downloadRequest)
+import com.cacheflow.sdk.download.DownloadManager
+import kotlinx.coroutines.flow.collect
+
+val fileUrl = "https://example.com/file.zip"
+val fileName = "file.zip"
+
+launch {
+    CacheFlow.performRequest(fileUrl, apiService::downloadFile).collect { result ->
+        when (result) {
+            is Result.Loading -> {
+                // Show download progress
+            }
+            is Result.Success -> {
+                val file = result.data
+                // Handle the successful download
+            }
+            is Result.Failure -> {
+                val message = result.message
+                // Handle download failure
+            }
+        }
+    }
+}
+```
+
+### 3. Using Request Listener with CacheFlow
+
+Although Flow is recommended, you can also use a `ResultListener` to handle the responses:
+
+```kotlin
+CacheFlow.performRequest(url, apiService::getData, object : ResultListener<MyResponse> {
+    override fun onLoading() {
+        // Handle loading state
+    }
+
+    override fun onSuccess(data: MyResponse?) {
+        // Handle success
+    }
+
+    override fun onFailure(message: String) {
+        // Handle error
+    }
+})
 ```
 
 ## Data Storage
 
 CacheFlow stores cached data in a local SQLite database using Room. Data is stored in a `CacheEntity` table, which includes the URL, the cached response, and a timestamp.
 
-### 1. Cache Entity
+### 1. Cache Entity:
 
 ```kotlin
 import androidx.room.Entity
@@ -114,7 +188,7 @@ data class CacheEntity(
 )
 ```
 
-### 2. Cache DAO
+### 2. Cache DAO:
 
 ```kotlin
 import androidx.room.Dao
@@ -142,11 +216,12 @@ interface CacheDao {
 
 CacheFlow supports various types of requests and handles them efficiently. You can make GET requests and handle responses with caching. For more complex scenarios, CacheFlow also supports handling errors and integrating with different data types.
 
-### Supported Request Types
+### 1. Supported Request Types:
 
 - **GET Requests**: The primary type of request handled by CacheFlow, suitable for retrieving data.
+- **File Downloads**: CacheFlow supports downloading files of types such as images, videos, PDFs, and more.
 
-### Handling Responses
+### 2. Handling Responses:
 
 Responses can be handled through the `Result` class which provides methods to deal with success, failure, and loading states.
 
@@ -172,57 +247,38 @@ fun handleResponse(result: Result<MyResponse>) {
 
 ## Testing
 
-Testing is crucial to ensure the reliability of CacheFlow SDK. Here's an overview of how to test different components:
+### 1. Writing Unit Tests:
 
-### Unit Tests
-
-Write unit tests for individual components such as `CacheManager`, `CacheDao`, and network operations. Use mocking frameworks to simulate interactions and verify behavior.
+Unit tests ensure that each component of the SDK functions correctly. Use Mockito for mocking dependencies and testing various scenarios.
 
 ```kotlin
+import org.junit.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+
 class CacheManagerTest {
-    @get:Rule
-    val instantExecutorRule = InstantTaskExecutorRule()
-
-    private lateinit var cacheDao: CacheDao
-    private lateinit var cacheManager: CacheManager
-
-    @Before
-    fun setup() {
-        cacheDao = mock(CacheDao::class.java)
-        cacheManager = CacheManager(cacheDao)
-    }
 
     @Test
-    fun testInsertCache() = runBlocking {
-        val cacheEntity = CacheEntity("url", "data")
-        `when`(cacheDao.insertCache(cacheEntity)).thenReturn(1)
+    fun testInsertCache() {
+        val mockCacheDao = mock(CacheDao::class.java)
+        val cacheManager = CacheManager(mockCacheDao)
 
+        val cacheEntity = CacheEntity("https://api.example.com/data", "response", System.currentTimeMillis())
         cacheManager.insertCache(cacheEntity)
 
-        verify(cacheDao).insertCache(cacheEntity)
-    }
-
-    @Test
-    fun testGetCacheByUrl() = runBlocking {
-        val url = "url"
-        val cacheEntity = CacheEntity(url, "data")
-        `when`(cacheDao.getCacheByUrl(url)).thenReturn(cacheEntity)
-
-        val result = cacheManager.getCacheByUrl(url)
-
-        assertEquals(cacheEntity, result)
+        verify(mockCacheDao).insertCache(cacheEntity)
     }
 }
 ```
 
-### Integration Tests
+### 2. Integration Testing:
 
-Test the integration of CacheFlow with your network client and database to ensure seamless operation across different components.
+Integration tests ensure that different parts of the SDK work together as expected. These tests should include scenarios where multiple components interact.
 
-### Edge Case Tests
+### 3. Edge Case Testing:
 
-Handle edge cases such as network failures, cache expiration, and large file downloads to ensure robustness.
+Test for edge cases such as network failures, empty responses, and invalid data.
 
-## Additional Resources
+## Conclusion
 
-For more details on CacheFlow SDK, refer to the [comprehensive documentation](URL_TO_DETAILED_DOCUMENTATION).
+CacheFlow SDK offers an efficient and flexible solution for caching network requests in Android applications. With its easy-to-use API, powerful caching mechanisms, and support for file downloads, it provides developers with a comprehensive toolset to enhance the performance and reliability of their apps.
