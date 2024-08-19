@@ -70,7 +70,9 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("release") {
-            from(components["release"])
+            afterEvaluate {
+                from(components["release"])
+            }
             groupId = "com.github.birdeveloper"
             artifactId = "CacheFlow"
             version = "v1.0.2"
@@ -91,5 +93,12 @@ publishing {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+}
+tasks.register("printComponents") {
+    doLast {
+        components.forEach { component ->
+            println("Component: ${component.name}")
+        }
     }
 }
