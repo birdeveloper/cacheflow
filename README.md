@@ -1,81 +1,131 @@
+
 # CacheFlow SDK
 
-CacheFlow SDK is a comprehensive Android library designed to streamline network requests and efficiently manage response caching. It aims to enhance the performance of your application by minimizing redundant network requests and optimizing response retrieval.
+CacheFlow SDK provides a robust and efficient solution for caching network responses in Android applications. It simplifies network requests by automatically handling caching, and also provides optional file download capabilities.
 
-## Features
+## Quick Start Guide
 
-- **Efficient Cache Management**: Automatically handles caching of network responses.
-- **Network Request Handling**: Simplifies the process of making network requests.
-- **Error Handling**: Customizable error messages and listeners.
-- **File Downloading**: Supports file downloads with progress tracking.
+### Installation
 
-## Getting Started
+Add the CacheFlow SDK to your `build.gradle` file:
 
-### Adding CacheFlow to Your Project
-
-To integrate CacheFlow into your Android project, follow these steps:
-
-1. **Add the Dependency**: Include CacheFlow in your project's `build.gradle` file:
-
-    ```groovy
-    dependencies {
-        implementation 'com.cacheflow.sdk:cacheflow:1.0.0'
-    }
-    ```
-
-2. **Sync Your Project**: Sync your project with Gradle to fetch and incorporate the CacheFlow library.
+```gradle
+dependencies {
+    implementation 'com.cacheflow:cacheflow:1.0.0'
+}
+```
 
 ### Setting Up CacheFlow
 
-1. **Initialize CacheFlow**: Configure CacheFlow in your `Application` class or main activity. Set up cache duration, offline mode, and error listeners as needed.
+Before making any requests, initialize CacheFlow with your configuration:
 
-    ```kotlin
-    CacheFlow.initialize(
-        CacheFlowConfig(
-            cacheDuration = 60 * 60 * 1000, // Cache duration of 1 hour
-            isOfflineModeEnabled = true,
-            errorListener = object : ErrorListener {
-                override fun onError(error: CacheFlowException) {
-                    // Handle any errors that occur
-                }
+```kotlin
+import com.cacheflow.sdk.CacheFlowConfig
+import com.cacheflow.sdk.CacheFlow
+
+val cacheFlowConfig = CacheFlowConfig(
+    cacheDuration = 60 * 60 * 1000, // 1 hour
+    isOfflineModeEnabled = true,
+    responseType = MyResponse::class, 
+    errorType = MyError::class 
+)
+
+CacheFlow.initialize(
+    config = cacheFlowConfig,
+    context = applicationContext,
+    baseUrl = "https://api.example.com"
+)
+```
+
+### Making Requests with CacheFlow (Flow Usage)
+
+You can make requests using CacheFlow with Flow:
+
+```kotlin
+import com.cacheflow.sdk.CacheFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+
+val url = "https://api.example.com/data"
+
+launch {
+    CacheFlow.performRequest(url) {
+        apiService.getData()
+    }.collect { result ->
+        when (result) {
+            is Result.Success -> {
+                val data = result.data
+                // Handle success
             }
-        )
-    )
-    ```
-
-2. **Configure Network Client**: Set up a `NetworkClient` instance to handle your network operations. Provide the base URL and optionally customize the `OkHttpClient`.
-
-    ```kotlin
-    val networkClient = NetworkClient.getInstance(
-        baseUrl = "https://api.example.com",
-        okHttpClient = OkHttpClient.Builder().build()
-    )
-    ```
-
-### Making Requests with CacheFlow
-
-1. **Define API Endpoints**: Create a Retrofit service interface to define your API endpoints.
-
-    ```kotlin
-    interface ApiService {
-        @GET("endpoint")
-        suspend fun getData(): Response<DataModel>
+            is Result.Failure -> {
+                val error = result.message
+                // Handle error
+            }
+            is Result.Loading -> {
+                // Handle loading state
+            }
+        }
     }
-    ```
+}
+```
 
-2. **Perform Network Requests**: Use CacheFlow to handle network requests and cache responses. You can use either Flow for reactive updates or callback-based listeners for real-time notifications.
+### Making Requests with CacheFlow (Request Listener)
 
-    ```kotlin
-    fun fetchData() {
-        val service = networkClient.createService(ApiService::class.java)
-        // Make network requests and handle responses
+Alternatively, you can use a request listener:
+
+```kotlin
+import com.cacheflow.sdk.CacheFlow
+import com.cacheflow.sdk.ResultListener
+
+CacheFlow.performRequest(
+    url = "https://api.example.com/data",
+    apiCall = { apiService.getData() },
+    listener = object : ResultListener<MyResponse> {
+        override fun onLoading() {
+            // Handle loading
+        }
+
+        override fun onSuccess(data: MyResponse?) {
+            // Handle success
+        }
+
+        override fun onFailure(message: String) {
+            // Handle failure
+        }
     }
-    ```
+)
+```
 
-## Additional Documentation
+### File Downloads
 
-For a more detailed explanation of CacheFlow's features, configuration options, and advanced usage, please refer to the [comprehensive documentation](README-Detailed-Documentation.md).
+CacheFlow can automatically detect and handle downloadable content:
 
-## License
+```kotlin
+import com.cacheflow.sdk.CacheFlow
+import com.cacheflow.sdk.ResultListener
+import java.io.File
 
-This project is licensed under the [MIT License](LICENSE).
+CacheFlow.performRequest(
+    url = "https://example.com/file.zip",
+    apiCall = { apiService.downloadFile() },
+    listener = object : ResultListener<File> {
+        override fun onLoading() {
+            // Handle loading
+        }
+
+        override fun onSuccess(data: File?) {
+            // Handle file download success
+        }
+
+        override fun onFailure(message: String) {
+            // Handle failure
+        }
+    }
+)
+```
+
+**Note**: If you expect the response to be a downloadable file, ensure you provide a `ResultListener<File>` to handle the download progress and completion.
+
+### Detailed Documentation
+
+For a more in-depth guide, including advanced usage and additional features, refer to the [detailed documentation](README-Detailed-Documentation.md).
