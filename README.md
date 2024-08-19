@@ -74,7 +74,7 @@ To integrate CacheFlow into your Android project, follow these steps:
 
 ## Additional Documentation
 
-For a more detailed explanation of CacheFlow's features, configuration options, and advanced usage, please refer to the [comprehensive documentation](link-to-detailed-markdown-file).
+For a more detailed explanation of CacheFlow's features, configuration options, and advanced usage, please refer to the [comprehensive documentation](README-Detailed-Documentation.md).
 
 ## License
 
