@@ -69,19 +69,13 @@ dependencies {
 
 publishing {
     publications {
-        // Create publication for the release build type
         create<MavenPublication>("release") {
+            from(components["release"])
             groupId = "com.github.birdeveloper"
             artifactId = "CacheFlow"
             version = "v1.0.2"
-
-            // Publishes the Android Library variant as AAR
-            afterEvaluate {
-                from(components["release"])
-            }
         }
     }
-
     repositories {
         maven {
             name = "GitHubPackages"
