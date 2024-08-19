@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.kotlin.android)
     id("kotlin-kapt")
+    id("maven-publish")
 }
 
 android {
@@ -64,4 +65,37 @@ dependencies {
     testImplementation(libs.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+publishing {
+    publications {
+        // Create publication for the release build type
+        create<MavenPublication>("release") {
+            groupId = "com.github.birdeveloper"
+            artifactId = "CacheFlow"
+            version = "v1.0.2"
+
+            // Publishes the Android Library variant as AAR
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/birdeveloper/CacheFlow")
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME_GITHUB")
+                password = project.findProperty("gpr.token") as String? ?: System.getenv("TOKEN_GITHUB")
+            }
+        }
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
