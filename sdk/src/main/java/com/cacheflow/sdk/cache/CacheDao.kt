@@ -19,7 +19,7 @@ interface CacheDao {
      * @param cacheEntity The cache entity to be inserted.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCache(cacheEntity: CacheEntity)
+    fun insertCache(cacheEntity: CacheEntity)
 
     /**
      * Retrieves a cache entry from the database based on the provided URL.
@@ -28,7 +28,7 @@ interface CacheDao {
      * @return The cache entry corresponding to the given URL, or null if not found.
      */
     @Query("SELECT * FROM cache_table WHERE url = :url")
-    suspend fun getCacheByUrl(url: String): CacheEntity?
+    fun getCacheByUrl(url: String): CacheEntity?
 
     /**
      * Deletes a specific cache entry from the database based on the provided URL.
@@ -36,11 +36,11 @@ interface CacheDao {
      * @param url The URL of the cached entry to be deleted.
      */
     @Query("DELETE FROM cache_table WHERE url = :url")
-    suspend fun deleteCacheByUrl(url: String)
+    fun deleteCacheByUrl(url: String)
 
     /**
      * Deletes all cache entries from the database.
      */
     @Query("DELETE FROM cache_table")
-    suspend fun clearAllCache()
+    fun clearAllCache()
 }

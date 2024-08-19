@@ -17,7 +17,7 @@ To integrate CacheFlow SDK into your Android project, add the following dependen
 
 ```gradle
 dependencies {
-    implementation 'com.cacheflow:cacheflow:1.0.0'
+    implementation 'com.github.birdeveloper:CacheFlow:v1.0.0'
 }
 ```
 

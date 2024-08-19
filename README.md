@@ -11,7 +11,7 @@ Add the CacheFlow SDK to your `build.gradle` file:
 
 ```gradle
 dependencies {
-    implementation 'com.cacheflow:cacheflow:1.0.0'
+    implementation 'com.github.birdeveloper:CacheFlow:v1.0.0'
 }
 ```
 

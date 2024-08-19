@@ -27,6 +27,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        val cacheFlowConfig = CacheFlowConfig(
+            cacheDuration = 60 * 60 * 1000, // 1 hour
+            isOfflineModeEnabled = true,
+            responseType = MyResponse::class,
+            errorType = MyError::class
+        )
+
+        CacheFlow.initialize(
+            config = cacheFlowConfig,
+            context = applicationContext,
+            baseUrl = "https://api.example.com"
+        )
     }
 }
 
